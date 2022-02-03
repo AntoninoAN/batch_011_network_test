@@ -73,8 +73,10 @@ fun executeBooksSearch(bookTitle: String): BookResponse {
     val bookResponseCode = httpUrlConnection.responseCode
     val stringRepresentation = parseByteOutputStream(bookIS)
 
-    Log.d(TAG, "executeBooksSearch: IS= ${bookIS.convert()} RC= $bookResponseCode")
-    return convertToPresentationData(bookIS.convert())
+    val bookResponseString = bookIS.convert()
+    Log.d(TAG, "executeBooksSearch: IS= ${bookResponseString} RC= $bookResponseCode")
+
+    return convertToPresentationData(bookResponseString)
 }
 
 private fun convertToPresentationData(deSerialized: String): BookResponse{
@@ -86,11 +88,18 @@ private fun convertToPresentationData(deSerialized: String): BookResponse{
         val bookItemsJson = itemArray.getJSONObject(index)
         val volumeInfoJson = bookItemsJson.getJSONObject("volumeInfo")
         val title = volumeInfoJson.getString("title")
-        val authors = volumeInfoJson.get("authors")
+        val authors = volumeInfoJson.getJSONArray("authors")
+        val authorsList = mutableListOf<String>()
+
+        for (jIndex in 0 until authors.length()){
+            authorsList.add(
+                authors.getString(jIndex)
+            )
+        }
 
         val volumeItem = VolumeItem(
             title,
-            authors as List<String>
+            authorsList
         )
         val bookItem = BookItem(
             volumeItem
@@ -101,6 +110,7 @@ private fun convertToPresentationData(deSerialized: String): BookResponse{
 }
 
 fun InputStream.convert(): String {
+
     return this.bufferedReader().use(BufferedReader::readText)
 }
 
