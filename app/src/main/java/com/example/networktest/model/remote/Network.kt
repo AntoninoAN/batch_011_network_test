@@ -8,6 +8,7 @@ import android.net.Uri
 import android.util.Log
 import com.example.networktest.model.presentation.BookItem
 import com.example.networktest.model.presentation.BookResponse
+import com.example.networktest.model.presentation.ImageItem
 import com.example.networktest.model.presentation.VolumeItem
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -90,7 +91,7 @@ private fun convertToPresentationData(deSerialized: String): BookResponse{
         val title = volumeInfoJson.getString("title")
         val authors = volumeInfoJson.getJSONArray("authors")
         val authorsList = mutableListOf<String>()
-
+        //volumeInfoJson.getJSONObject("imageLinks").getString("thumb")
         for (jIndex in 0 until authors.length()){
             authorsList.add(
                 authors.getString(jIndex)
@@ -99,7 +100,8 @@ private fun convertToPresentationData(deSerialized: String): BookResponse{
 
         val volumeItem = VolumeItem(
             title,
-            authorsList
+            authorsList,
+            ImageItem("")
         )
         val bookItem = BookItem(
             volumeItem
