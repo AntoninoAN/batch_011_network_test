@@ -8,29 +8,71 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.example.networktest.model.presentation.BookResponse
+import com.example.networktest.model.remote.Api
 import com.example.networktest.model.remote.executeBooksSearch
 import com.example.networktest.model.remote.isDeviceConnected
+import com.example.networktest.view.BookListFragment
+import com.example.networktest.view.SearchBookFragment
 import com.google.android.material.snackbar.Snackbar
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
     override fun onCreate(savedInstanceState: Bundle?) {
 
         //StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build())
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         //executeBooksSearch("how to cook Mole")
 
         if (isDeviceConnected())
-            executeNetworkCall()
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container_search, SearchBookFragment())
+                .commit()
+            //executeNetworkCall()
         else
             showError()
     }
 
+    override fun onStart() {
+        super.onStart()
+    }
+
+    fun executeRetrofit(bookTitle: String, bookType: String, maxResult: Int) {
+        Api.initRetrofit().getBookByTitle(bookTitle,
+        bookType,
+        maxResult)
+            .enqueue(object : Callback<BookResponse>{
+                override fun onResponse(
+                    call: Call<BookResponse>,
+                    response: Response<BookResponse>
+                ) {
+                    if (response.isSuccessful)
+                        inflateDisplayFragment(response.body())
+                    else
+                        showError()
+                }
+
+                override fun onFailure(call: Call<BookResponse>, t: Throwable) {
+                    TODO("Not yet implemented")
+                }
+            })
+    }
+
+    private fun inflateDisplayFragment(dataSet: BookResponse?) {
+        dataSet?.let {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container_display, BookListFragment.newInstance(it))
+                .commit()
+        }
+    }
+
     private fun showError() {
-        Snackbar.make(findViewById(R.id.tv_display),
+
+        Snackbar.make(findViewById(R.id.container_display),
         "No network, retry?",
         Snackbar.LENGTH_INDEFINITE)
             .setAction("Retry"){
@@ -38,9 +80,6 @@ class MainActivity : AppCompatActivity() {
             }.show()
     }
 
-    private fun executeNetworkCall() {
-        BookNetwork(findViewById(R.id.tv_display)).execute()
-    }
 
     class BookNetwork(private val display: TextView): AsyncTask<String, Void, BookResponse>(){
 
